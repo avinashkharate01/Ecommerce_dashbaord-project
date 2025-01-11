@@ -1,0 +1,107 @@
+1.	category
+if [category_name] = "" 
+and [product_name] = 
+"""While you Were Out"" Message Book, One Form per Page" 
+then "Office Supplies" 
+else [category_name]
+
+
+2.	sales	
+ [sales_per_quantity]*[order_quantity]
+
+
+3. 	profit	
+ [profit_per_quantity]*[order_quantity]
+
+
+4.	order_date_new
+Date.FromText(
+    Text.Start([order_date], 4) & "-" & 
+    Text.Middle([order_date], 4, 2) & "-" & 
+    Text.End([order_date], 2)
+)
+
+
+5. Standardized Shipping Type
+
+
+if [shipping_type] = "2nd Class" then "Second Class"
+else if [shipping_type] = "1 Class" then "First Class"
+else if [shipping_type] = "Std. Class" then "Standard Class"
+else if [shipping_type] = "Std.Class" then "Standard Class"
+else [shipping_type]
+
+
+DAX Query:
+1.	order_date_new =
+DATE(
+    VALUE(LEFT(ecommerce_data[order_date], 4)),
+    VALUE(MID(ecommerce_data[order_date], 5, 2)),
+    VALUE(RIGHT(ecommerce_data[order_date], 2))
+)
+2. 	Standardized Shipping Type =
+
+SWITCH(
+    TRUE(),
+    [shipping_type] = "2nd Class", "Second Class",
+    [shipping_type] = "1 Class", "First Class",
+    [shipping_type] = "Std. Class", "Standard Class",
+    [shipping_type] = "Std.Class", "Standard Class",
+    [shipping_type]
+)
+
+
+Creating Calendar Table:
+calendar = CALENDAR(MIN(ecommerce_data[order_date_new]),today())
+
+calendar =
+CALENDAR(MIN(ecommerce_data[order_date_new]),MAX(ecommerce_data[order_date_new]))
+
+Creating new columns in the calendar table:
+
+Year = YEAR('calendar'[Date])
+Month Name = FORMAT('calendar'[Date],"mmmm")
+
+Month Number = MONTH('calendar'[Date]) 
+
+Creating Measures:
+
+YTD Sales Formulas:
+
+Total Sales = sum(ecommerce_data[sales])
+
+YTD Sales = TOTALYTD([Total Sales], 'calendar'[Date])
+
+PYTD Sales = 
+CALCULATE([Total Sales],DATESYTD(SAMEPERIODLASTYEAR('calendar'[Date])))
+
+YoY Sales Delta = [YTD Sales]-[PYTD Sales]
+
+YoY Sales % = [YoY Sales Delta]/[PYTD Sales]
+
+YTD Profit Formulas:
+
+Total Profit= sum(ecommerce_data[profit])
+
+YTD Profit= TOTALYTD([Total Profit], 'calendar'[Date])
+
+PYTD Profit= 
+CALCULATE([Total Profit],DATESYTD(SAMEPERIODLASTYEAR('calendar'[Date])))
+
+YoY Profit Delta = [YTD Profit]-[PYTD Profit]
+
+YoY Profit % = [YoY Profit Delta]/[PYTD Profit]
+
+YTD Quantity:
+
+Total Quantity= sum(ecommerce_data[order_quantity])
+
+YTD Quantity= TOTALYTD([Total Quantity], 'calendar'[Date])
+
+PYTD Quantity= 
+CALCULATE([Total Quantity],DATESYTD(SAMEPERIODLASTYEAR('calendar'[Date])))
+
+YoY Quantity Delta = [YTD Quantity]-[PYTD Quantity]
+
+YoY Quantity% = [YoY Quantity Delta]/[PYTD Quantity]
+
